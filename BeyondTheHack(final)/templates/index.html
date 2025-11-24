@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Classroom Automation Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+        
+        .camera-feed {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .camera-feed-container {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .appliance-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .appliance-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-on {
+            background-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+        
+        .status-off {
+            background-color: #dc3545;
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .events-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .event-item {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        
+        .event-on {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        
+        .event-off {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .energy-metrics {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .instructions {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .ai-recommendation {
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+        
+        .ai-response {
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .alert-sm {
+            padding: 8px 12px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-4 text-primary mb-3">
+                        <i class="fas fa-brain"></i> Smart Classroom Automation
+                    </h1>
+                    <p class="lead text-muted">Smart Energy Management System</p>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="row">
+                <!-- Left Side - Camera Feed and Appliance Controls -->
+                <div class="col-lg-8">
+                    <!-- Camera Feed -->
+                    <div class="mb-4">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-video"></i> Live Camera Feed (Clean)
+                                </h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="text-center camera-feed-container">
+                                    <img id="cameraFeed" src="/video_feed" class="camera-feed" alt="Camera Feed">
+                                    <div id="loading" class="loading">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Initializing camera...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appliance Controls -->
+                    <div class="control-panel">
+                        <h5 class="mb-3">
+                            <i class="fas fa-lightbulb"></i> Appliance Controls
+                        </h5>
+                        <div id="applianceControls">
+                            <!-- Appliance controls will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side - Control Panel -->
+                <div class="col-lg-4">
+                    <!-- Instructions -->
+                    <div class="instructions">
+                        <h5 class="mb-3">
+                            <i class="fas fa-info-circle"></i> Instructions
+                        </h5>
+                        <div id="instructionsList">
+                            <p><strong>Press Start Detection</strong> to begin automation</p>
+                            <p><strong>Press Stop Detection</strong> to end session</p>
+                            <p><strong>Press Pause/Resume</strong> to control automation</p>
+                            <p><strong>Use toggle buttons</strong> for manual control</p>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="status-card">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-line"></i> System Status
+                        </h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="mb-1"><strong>Distance:</strong></p>
+                                <p id="currentDistance" class="h5">0 cm</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1"><strong>Active Zones:</strong></p>
+                                <p id="activeZones" class="h5">None</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <p class="mb-1"><strong>Automation:</strong></p>
+                            <span id="automationStatus" class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+
+                    <!-- Setup Controls -->
+                    <div class="control-panel" id="setupControls">
+                        <h5 class="mb-3">
+                            <i class="fas fa-cogs"></i> System Setup
+                        </h5>
+                        <div class="d-grid gap-2">
+                            <button id="startDetection" class="btn btn-success btn-custom">
+                                <i class="fas fa-play"></i> Start Detection
+                            </button>
+                            <button id="completeCalibration" class="btn btn-primary btn-custom" disabled>
+                                <i class="fas fa-check"></i> Complete Calibration
+                            </button>
+                            <div id="zoneSetupControls" style="display: none;">
+                                <button id="startZone" class="btn btn-warning btn-custom">
+                                    <i class="fas fa-map-marker"></i> Mark Zone Start
+                                </button>
+                                <button id="endZone" class="btn btn-info btn-custom">
+                                    <i class="fas fa-flag-checkered"></i> Mark Zone End
+                                </button>
+                            </div>
+                            <button id="stopDetection" class="btn btn-danger btn-custom" disabled>
+                                <i class="fas fa-stop"></i> Stop Detection
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Automation Controls -->
+                    <div class="control-panel" id="automationControls" style="display: none;">
+                        <h5 class="mb-3">
+                            <i class="fas fa-robot"></i> Automation Controls
+                        </h5>
+                        <div class="d-grid gap-2">
+                            <button id="pauseAutomation" class="btn btn-warning btn-custom">
+                                <i class="fas fa-pause"></i> Pause Automation
+                            </button>
+                            <button id="stopAutomation" class="btn btn-danger btn-custom">
+                                <i class="fas fa-stop"></i> Stop Automation
+                            </button>
+                            <button id="generateReport" class="btn btn-info btn-custom">
+                                <i class="fas fa-chart-bar"></i> View Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Energy Metrics -->
+                    <div class="energy-metrics">
+                        <h5 class="mb-3">
+                            <i class="fas fa-bolt"></i> Energy Metrics
+                        </h5>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <p class="mb-1">Power</p>
+                                <p id="totalPower" class="metric-value">0 Wh</p>
+                            </div>
+                            <div class="col-4">
+                                <p class="mb-1">Cost</p>
+                                <p id="totalCost" class="metric-value">₹0</p>
+                            </div>
+                            <div class="col-4">
+                                <p class="mb-1">CO₂</p>
+                                <p id="totalCO2" class="metric-value">0 kg</p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Energy Report -->
+                    <div class="control-panel" id="energyReport" style="display: none;">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-line"></i> Energy Report
+                        </h5>
+                        <div id="reportContent">
+                            <!-- Report content will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Events -->
+                    <div class="control-panel">
+                        <h5 class="mb-3">
+                            <i class="fas fa-history"></i> Recent Events
+                        </h5>
+                        <div id="eventsLog" class="events-log">
+                            <p class="text-muted text-center">No events yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let detectionActive = false;
+        let automationPaused = false;
+        let statusUpdateInterval;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            startStatusUpdates();
+        });
+
+        function initializeDashboard() {
+            // Event listeners
+            document.getElementById('startDetection').addEventListener('click', startDetection);
+            document.getElementById('stopDetection').addEventListener('click', stopDetection);
+            document.getElementById('completeCalibration').addEventListener('click', completeCalibration);
+            document.getElementById('startZone').addEventListener('click', startZone);
+            document.getElementById('endZone').addEventListener('click', endZone);
+            document.getElementById('pauseAutomation').addEventListener('click', pauseAutomation);
+            document.getElementById('stopAutomation').addEventListener('click', stopAutomation);
+            document.getElementById('generateReport').addEventListener('click', generateReport);
+            
+            // Initialize camera feed
+            const cameraFeed = document.getElementById('cameraFeed');
+            const loading = document.getElementById('loading');
+            
+            cameraFeed.onload = function() {
+                loading.style.display = 'none';
+                cameraFeed.style.display = 'block';
+            };
+            
+            cameraFeed.onerror = function() {
+                loading.innerHTML = '<p class="text-danger">Camera not available</p>';
+            };
+        }
+
+        function startDetection() {
+            fetch('/start_detection', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    detectionActive = true;
+                    document.getElementById('startDetection').disabled = true;
+                    document.getElementById('completeCalibration').disabled = false;
+                    document.getElementById('stopDetection').disabled = false;
+                    // Hide instructions section
+                    document.querySelector('.instructions').style.display = 'none';
+                    showNotification('Detection started! Complete calibration when ready.', 'success');
+                } else {
+                    showNotification('Failed to start detection: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error starting detection: ' + error, 'error');
+            });
+        }
+
+        function completeCalibration() {
+            fetch('/complete_calibration', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('completeCalibration').disabled = true;
+                    document.getElementById('zoneSetupControls').style.display = 'block';
+                    showNotification('Calibration complete! Now mark your zones.', 'success');
+                } else {
+                    showNotification('Failed to complete calibration: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error completing calibration: ' + error, 'error');
+            });
+        }
+
+        function startZone() {
+            fetch('/start_zone', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showNotification(data.message, 'info');
+                } else {
+                    showNotification('Failed to mark zone start: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error marking zone start: ' + error, 'error');
+            });
+        }
+
+        function endZone() {
+            fetch('/end_zone', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showNotification(data.message, 'info');
+                    // Check if setup is complete
+                    checkSetupStatus();
+                } else {
+                    showNotification('Failed to mark zone end: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error marking zone end: ' + error, 'error');
+            });
+        }
+
+        function checkSetupStatus() {
+            fetch('/get_setup_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.zone_setup_complete) {
+                    document.getElementById('setupControls').style.display = 'none';
+                    document.getElementById('automationControls').style.display = 'block';
+                    showNotification('Zone setup complete! Automation is now active.', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking setup status:', error);
+            });
+        }
+
+        function stopDetection() {
+            fetch('/stop_detection', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                detectionActive = false;
+                document.getElementById('startDetection').disabled = false;
+                document.getElementById('stopDetection').disabled = true;
+                // Instructions stay hidden after first use
+                showNotification('Detection stopped', 'info');
+            })
+            .catch(error => {
+                showNotification('Error stopping detection: ' + error, 'error');
+            });
+        }
+
+        function pauseAutomation() {
+            fetch('/pause_automation', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                automationPaused = data.paused;
+                const button = document.getElementById('pauseAutomation');
+                if (automationPaused) {
+                    button.innerHTML = '<i class="fas fa-play"></i> Resume Automation';
+                    button.className = 'btn btn-success btn-custom';
+                } else {
+                    button.innerHTML = '<i class="fas fa-pause"></i> Pause Automation';
+                    button.className = 'btn btn-warning btn-custom';
+                }
+                showNotification(automationPaused ? 'Automation paused' : 'Automation resumed', 'info');
+                // Refresh status to update UI
+                updateStatus();
+            })
+            .catch(error => {
+                showNotification('Error toggling automation: ' + error, 'error');
+            });
+        }
+
+        function stopAutomation() {
+            if (!confirm('Are you sure you want to stop automation and turn off all appliances?')) {
+                return;
+            }
+            
+            fetch('/stop_automation', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    automationPaused = data.paused;
+                    const pauseButton = document.getElementById('pauseAutomation');
+                    pauseButton.innerHTML = '<i class="fas fa-play"></i> Resume Automation';
+                    pauseButton.className = 'btn btn-success btn-custom';
+                    showNotification(data.message || 'Automation stopped - all appliances turned off', 'success');
+                    // Refresh status to update UI
+                    updateStatus();
+                } else {
+                    showNotification('Failed to stop automation', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error stopping automation: ' + error, 'error');
+            });
+        }
+
+        function generateReport() {
+            // Show loading state
+            const reportButton = document.getElementById('generateReport');
+            const originalText = reportButton.innerHTML;
+            reportButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            reportButton.disabled = true;
+            
+            fetch('/browser_report')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Report data received:', data);
+                displayReport(data);
+                document.getElementById('energyReport').style.display = 'block';
+                showNotification('Report generated successfully', 'success');
+            })
+            .catch(error => {
+                console.error('Error generating report:', error);
+                showNotification('Error generating report: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Restore button state
+                reportButton.innerHTML = originalText;
+                reportButton.disabled = false;
+            });
+        }
+
+        function displayReport(data) {
+            const reportContent = document.getElementById('reportContent');
+            
+            // Check if data is valid
+            if (!data) {
+                reportContent.innerHTML = '<div class="alert alert-danger">No data available for report</div>';
+                return;
+            }
+            
+            // Calculate time in hours and minutes
+            const formatTime = (seconds) => {
+                if (!seconds || isNaN(seconds)) return '0h 0m';
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                return `${hours}h ${minutes}m`;
+            };
+            
+            // Calculate percentage
+            const formatPercentage = (value, total) => {
+                if (!total || total <= 0) return 0;
+                return ((value / total) * 100).toFixed(1);
+            };
+            
+            // Safe data access with defaults
+            const sessionDuration = data.session_duration_hours || 0;
+            const totalCost = data.total_cost || 0;
+            const totalSavingsCost = data.total_savings_cost || 0;
+            const efficiencyPercentage = data.efficiency_percentage || 0;
+            const maxPossibleCost = data.max_possible_cost || 0;
+            
+            // Safe access to nested objects
+            const typeAnalysis = data.type_analysis || { lights: { time_on: 0, consumption: 0, cost: 0, appliances: [] }, fans: { time_on: 0, consumption: 0, cost: 0, appliances: [] } };
+            const applianceAnalysis = data.appliance_analysis || {};
+            
+            // Helper function to get user-friendly appliance names
+            const getApplianceName = (relayName) => {
+                const names = {
+                    'M1': 'Zone 1 Light',
+                    'M2': 'Zone 1 Fan', 
+                    'M3': 'Zone 2 Light',
+                    'M4': 'Zone 2 Fan'
+                };
+                return names[relayName] || relayName;
+            };
+            
+            reportContent.innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h6>Session Duration</h6>
+                                <h4>${sessionDuration.toFixed(2)}h</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h6>Efficiency</h6>
+                                <h4>${efficiencyPercentage.toFixed(1)}%</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h6>Total Cost</h6>
+                                <h4>₹${totalCost.toFixed(2)}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h6>Cost Saved</h6>
+                                <h4>₹${totalSavingsCost.toFixed(2)}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-lightbulb"></i> Lights Analysis</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>ON Time: ${formatTime(typeAnalysis.lights.time_on)}</small><br>
+                            <small>Consumption: ${(typeAnalysis.lights.consumption || 0).toFixed(2)} Wh</small>
+                        </div>
+                        <div class="col-6">
+                            <small>Cost: ₹${(typeAnalysis.lights.cost || 0).toFixed(2)}</small><br>
+                            <small>Appliances: ${(typeAnalysis.lights.appliances || []).map(getApplianceName).join(', ') || 'None'}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-fan"></i> Fans Analysis</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>ON Time: ${formatTime(typeAnalysis.fans.time_on)}</small><br>
+                            <small>Consumption: ${(typeAnalysis.fans.consumption || 0).toFixed(2)} Wh</small>
+                        </div>
+                        <div class="col-6">
+                            <small>Cost: ₹${(typeAnalysis.fans.cost || 0).toFixed(2)}</small><br>
+                            <small>Appliances: ${(typeAnalysis.fans.appliances || []).map(getApplianceName).join(', ') || 'None'}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-home"></i> Zone Analysis</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Zone 1:</strong><br>
+                            <small>Zone 1 Light: ${formatTime(applianceAnalysis.M1?.time_on || 0)} (₹${(applianceAnalysis.M1?.cost || 0).toFixed(2)})</small><br>
+                            <small>Zone 1 Fan: ${formatTime(applianceAnalysis.M2?.time_on || 0)} (₹${(applianceAnalysis.M2?.cost || 0).toFixed(2)})</small>
+                        </div>
+                        <div class="col-6">
+                            <strong>Zone 2:</strong><br>
+                            <small>Zone 2 Light: ${formatTime(applianceAnalysis.M3?.time_on || 0)} (₹${(applianceAnalysis.M3?.cost || 0).toFixed(2)})</small><br>
+                            <small>Zone 2 Fan: ${formatTime(applianceAnalysis.M4?.time_on || 0)} (₹${(applianceAnalysis.M4?.cost || 0).toFixed(2)})</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-chart-pie"></i> Smart Automation Impact</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>Without Automation:</small><br>
+                            <small>Max Cost: ₹${maxPossibleCost.toFixed(2)}</small>
+                        </div>
+                        <div class="col-6">
+                            <small>With Automation:</small><br>
+                            <small>Actual Cost: ₹${totalCost.toFixed(2)}</small>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: ${Math.min(efficiencyPercentage, 100)}%">
+                                ${efficiencyPercentage.toFixed(1)}% Saved
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-sm btn-outline-primary" onclick="document.getElementById('energyReport').style.display='none'">
+                        <i class="fas fa-times"></i> Close Report
+                    </button>
+                </div>
+            `;
+        }
+
+        function startStatusUpdates() {
+            statusUpdateInterval = setInterval(updateStatus, 2000); // Update every 2 seconds
+        }
+
+        function updateStatus() {
+            fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                // Update distance and zones
+                document.getElementById('currentDistance').textContent = Math.round(data.current_distance) + ' cm';
+                
+                if (data.active_zone_names && data.active_zone_names.length > 0) {
+                    document.getElementById('activeZones').textContent = data.active_zone_names.join(', ');
+                } else {
+                    document.getElementById('activeZones').textContent = 'None';
+                }
+                
+                // Update automation status
+                const automationStatus = document.getElementById('automationStatus');
+                if (data.automation_paused) {
+                    automationStatus.textContent = 'Paused';
+                    automationStatus.className = 'badge bg-warning';
+                } else {
+                    automationStatus.textContent = 'Active';
+                    automationStatus.className = 'badge bg-success';
+                }
+                
+                // Update appliance controls
+                updateApplianceControls(data.relay_state, data.manual_override);
+                
+                // Update energy metrics
+                if (data.energy_metrics) {
+                    document.getElementById('totalPower').textContent = data.energy_metrics.total_consumption_wh.toFixed(2) + ' Wh';
+                    document.getElementById('totalCost').textContent = '₹' + data.energy_metrics.total_cost_inr.toFixed(2);
+                    document.getElementById('totalCO2').textContent = data.energy_metrics.total_co2_kg.toFixed(3) + ' kg';
+                }
+                
+                // Update events
+                updateEvents();
+                
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+            });
+        }
+
+        function updateApplianceControls(relayState, manualOverride) {
+            const container = document.getElementById('applianceControls');
+            
+            // All appliances in a single row
+            const appliances = [
+                {key: 'relay1', name: 'Zone 1 Light', icon: 'fas fa-lightbulb', zone: 'Zone 1'},
+                {key: 'relay2', name: 'Zone 2 Light', icon: 'fas fa-lightbulb', zone: 'Zone 2'},
+                {key: 'relay3', name: 'Zone 1 Fan', icon: 'fas fa-fan', zone: 'Zone 1'},
+                {key: 'relay4', name: 'Zone 2 Fan', icon: 'fas fa-fan', zone: 'Zone 2'}
+            ];
+            
+            // Create row container
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'row';
+            
+            appliances.forEach(appliance => {
+                const isOn = relayState[appliance.key];
+                const isManual = manualOverride[appliance.key];
+                
+                const card = document.createElement('div');
+                card.className = 'col-3 mb-3';
+                card.innerHTML = `
+                    <div class="appliance-card h-100">
+                        <div class="d-flex flex-column align-items-center text-center">
+                            <div class="mb-2">
+                                <i class="${appliance.icon} fa-2x"></i>
+                            </div>
+                            <strong>${appliance.name}</strong>
+                            <small class="text-muted">${appliance.zone}</small>
+                            <br>
+                            <span class="status-indicator ${isOn ? 'status-on' : 'status-off'}"></span>
+                            <span>${isOn ? 'ON' : 'OFF'}</span>
+                            ${isManual ? '<br><span class="badge bg-warning mt-1">Manual</span>' : ''}
+                            <button class="btn btn-sm ${isOn ? 'btn-danger' : 'btn-success'} mt-2" 
+                                    onclick="toggleRelay('${appliance.key}')">
+                                ${isOn ? 'Turn OFF' : 'Turn ON'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                rowDiv.appendChild(card);
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(rowDiv);
+        }
+
+        function toggleRelay(relayName) {
+            fetch('/toggle_relay', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({relay: relayName})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Get appliance name for better notification
+                    const applianceNames = {
+                        'relay1': 'Zone 1 Light',
+                        'relay2': 'Zone 2 Light',
+                        'relay3': 'Zone 1 Fan',
+                        'relay4': 'Zone 2 Fan'
+                    };
+                    const applianceName = applianceNames[relayName] || relayName;
+                    const isOn = data.relay_state[relayName];
+                    const action = isOn ? 'turned ON' : 'turned OFF';
+                    const type = data.manual_override[relayName] ? ' (Manual)' : ' (Auto)';
+                    
+                    showNotification(`${applianceName} ${action}${type}`, isOn ? 'success' : 'info');
+                    
+                    // Refresh status to update UI immediately
+                    updateStatus();
+                } else {
+                    showNotification(data.message || 'Failed to toggle relay', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error toggling relay: ' + error, 'error');
+            });
+        }
+
+        function updateEvents() {
+            fetch('/get_events')
+            .then(response => response.json())
+            .then(data => {
+                const eventsLog = document.getElementById('eventsLog');
+                
+                if (data.events && data.events.length > 0) {
+                    eventsLog.innerHTML = '';
+                    data.events.forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = `event-item ${event.action === 'ON' ? 'event-on' : 'event-off'}`;
+                        // Map relay names to friendly names
+                        const applianceNames = {
+                            'relay1': 'Zone 1 Light',
+                            'relay2': 'Zone 2 Light',
+                            'relay3': 'Zone 1 Fan',
+                            'relay4': 'Zone 2 Fan',
+                            'M1': 'Zone 1 Light',
+                            'M2': 'Zone 1 Fan',
+                            'M3': 'Zone 2 Light',
+                            'M4': 'Zone 2 Fan'
+                        };
+                        const applianceName = applianceNames[event.appliance] || event.appliance;
+                        const typeBadge = event.type === 'manual' ? '<span class="badge bg-warning ms-1">Manual</span>' : '';
+                        const duration = event.duration ? ` <small class="text-muted">(${event.duration})</small>` : '';
+                        
+                        eventDiv.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <span>
+                                    <strong>${applianceName}</strong> ${event.action}${duration} ${typeBadge}
+                                </span>
+                                <small>${event.timestamp}</small>
+                            </div>
+                        `;
+                        eventsLog.appendChild(eventDiv);
+                    });
+                } else {
+                    eventsLog.innerHTML = '<p class="text-muted text-center">No events yet</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error updating events:', error);
+            });
+        }
+
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (statusUpdateInterval) {
+                clearInterval(statusUpdateInterval);
+            }
+        });
+    </script>
+</body>
+</html>
